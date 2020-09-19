@@ -1,6 +1,7 @@
 import { Request } from "../../framework/request";
 import * as faker from "faker";
 import { expect } from "chai";
+import { expectErrorInBody } from "../../framework/expectErrorInBody";
 
 describe("Users API can - ", async function () {
   it("Create a user: given valid input, store the user against a new ID and return status code `201 Created` with the ID", async function () {
@@ -117,7 +118,7 @@ describe("Users API can - ", async function () {
   });
   it("handle error if input data does not pass validation against the schema, return `400 Bad Request`. Name shorter than 3 characters", async function () {
     const email = faker.internet.email(undefined, undefined, "somemail.net");
-    try {
+    let req = async function () {
       const resp = await new Request("http://localhost:8000/users/")
         .method("POST")
         .body({
@@ -126,16 +127,13 @@ describe("Users API can - ", async function () {
           dateOfBirth: "1990-11-11",
         })
         .send();
-    } catch (err) {
-      expect(err.statusCode).to.equal(400);
-      expect(err.error.errors).to.equal(
-        '"name" length must be at least 3 characters long'
-      );
     }
+
+    await expectErrorInBody (() => req(), `"name" length must be at least 3 characters long`, 400)
   });
   it("handle error if input data does not pass validation against the schema, return `400 Bad Request`. Name longer than 30 character", async function () {
     const email = faker.internet.email(undefined, undefined, "somemail.net");
-    try {
+    let req = async function () {
       const resp = await new Request("http://localhost:8000/users/")
         .method("POST")
         .body({
@@ -144,16 +142,13 @@ describe("Users API can - ", async function () {
           dateOfBirth: "1990-11-11",
         })
         .send();
-    } catch (err) {
-      expect(err.statusCode).to.equal(400);
-      expect(err.error.errors).to.equal(
-        '"name" length must be less than or equal to 30 characters long'
-      );
     }
+
+    await expectErrorInBody (() => req(), `"name" length must be less than or equal to 30 characters long`, 400)
   });
   it("handle error if input data does not pass validation against the schema, return `400 Bad Request`. Additional fields are added", async function () {
     const email = faker.internet.email(undefined, undefined, "somemail.net");
-    try {
+    let req = async function () {
       const resp = await new Request("http://localhost:8000/users/")
         .method("POST")
         .body({
@@ -163,28 +158,23 @@ describe("Users API can - ", async function () {
           dateOfBirth: "1990-11-11",
         })
         .send();
-    } catch (err) {
-      expect(err.statusCode).to.equal(400);
-      expect(err.error.errors).to.equal('"lastname" is not allowed');
     }
+
+    await expectErrorInBody (() => req(), `"lastname" is not allowed`, 400)
   });
   it("handle error if input data does not pass validation against the schema, return `400 Bad Request`. Wrong date format", async function () {
     const email = faker.internet.email(undefined, undefined, "somemail.net");
-    try {
+    let req = async function () {
       const resp = await new Request("http://localhost:8000/users/")
         .method("POST")
         .body({
           name: `John`,
-          lastname: `Johnson`,
           email: email,
           dateOfBirth: "1990-11-1111",
         })
         .send();
-    } catch (err) {
-      expect(err.statusCode).to.equal(400);
-      expect(err.error.errors).to.equal(
-        '"dateOfBirth" must be in ISO 8601 date format'
-      );
     }
+
+    await expectErrorInBody (() => req(), "\"dateOfBirth\" must be in ISO 8601 date format", 400)
   });
 });
